@@ -4,8 +4,8 @@ V1
 3) 아직 kivy와의 연동은 x
 
 어플개발을 위해 설치되어야하는 패키지들
-kivy(https://m.blog.naver.com/dsz08082/221842582052)
-gtts
-playsound
-opencv
-pygame(음성파일 재생에 있어서 필요)
+1. kivy(https://m.blog.naver.com/dsz08082/221842582052)
+2. gtts
+3. playsound
+4. opencv
+5. pygame(음성파일 재생에 있어서 필요)
