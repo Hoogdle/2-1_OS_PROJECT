@@ -116,7 +116,7 @@
                 valign: 'middle'
                 font_size: 20
                 font_name: 'NanumGothicBold.ttf'  # 한글을 지원하는 폰트를 추가함.
-                on_press: app.root.current = 'main'
+                on_press: root.announce_product()
                 canvas.before:
                     Color:                        
                         rgba: 134/255, 182/255, 246/255, 1 
@@ -128,6 +128,7 @@
         BoxLayout:
             size_hint_y: 0.1  
 
+        #back button
         BoxLayout:
             size_hint_y: None
             height: '100dp'  
@@ -152,6 +153,7 @@
                     center_x: self.parent.center_x
                     center_y: self.parent.center_y
 
+            #basketscreen button
             Button:
                 id: basket_button
                 size_hint: None, None
