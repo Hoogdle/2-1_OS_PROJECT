@@ -1,3 +1,4 @@
+#update
 import sys
 import time
 import sqlite3
@@ -53,10 +54,14 @@ class MainScreen(Screen):
             print(product_name)
 
         # Use text-to-speech to announce the detected product
-        our_gTTS.main(product_name)
+        our_gTTS.main(product_name, 0)
 
         # Store product_name in the app instance for use in other screens
         self.manager.get_screen('second').set_product_name(product_name)
+
+        # Change screen only if product_name is not None
+        if product_name is not None:
+            self.manager.current = 'second'
 
 class SecondScreen(Screen):
     # Properties to hold product data, basket items, and total price
@@ -80,7 +85,7 @@ class SecondScreen(Screen):
                 self.product_price = str(product_data[4])
                 self.product_capacity = str(product_data[5])
                 self.product_calorie = str(product_data[6])
-                self.product_data = f"이름: {self.product_name}\n {self.product_brand}\n가격: {self.product_price}\n용량: {self.product_capacity}\n칼로리: {self.product_calorie}"
+                self.product_data = f"이름: {self.product_name}\n\n {self.product_brand}\n가격: {self.product_price}\n용량: {self.product_capacity}\n칼로리: {self.product_calorie}"
             else:  # If product not found in database
                 self.product_data = "Not Found"
         else:
@@ -97,46 +102,67 @@ class SecondScreen(Screen):
 
     # Method to trigger TTS for the detected product
     def announce_product(self):
-        if self.product_name:
-            our_gTTS.main(self.product_name)
+        if product_name:
+            our_gTTS.main(product_name, 1)
 
 class BasketScreen(Screen):
     # Properties to hold basket items and total price
     basket_items = ListProperty([])
     total_price = NumericProperty(0)
+    basket_list = StringProperty("")
     total_price_text = StringProperty("")
     item_counts = {}  # Dictionary to hold item counts
 
     # Method to update basket items and total price
     def update_basket(self, items):
-        self.item_counts = {}  # Reset item counts
+        # Reset basket items and item counts
+        self.basket_items = []
+        self.item_counts = {}
+
+        # Update basket items and calculate item counts
         for item in items:
             product_name, price = item
             if product_name in self.item_counts:
                 self.item_counts[product_name]['count'] += 1
             else:
                 self.item_counts[product_name] = {'count': 1, 'price': price}
+            self.basket_items.append(item)
 
-        self.basket_items = items  # Update basket items
-        self.total_price = sum([item[1] for item in items])  # Calculate total price
+        # Calculate total price
+        self.total_price = sum([item[1] for item in items])
 
         # Update the UI with basket items and total price
-        self.ids.basket_grid.clear_widgets()  # Clear existing widgets
-        for product_name, info in self.item_counts.items():
-            label = Label(text=f"{product_name}: ${info['price']:.2f} x {info['count']}", size_hint_y=None, height=40)
-            self.ids.basket_grid.add_widget(label)  # Add item labels to the grid layout
+        self.update_ui()
 
-        # Update the total price label
-        self.total_price_text = f"Total Price: ${self.total_price:.2f}\nItems:\n" + \
-                                "\n".join([f"{product_name}: ${info['price']:.2f} x {info['count']}" for product_name, info in self.item_counts.items()])
-        
     # Method to clear basket and reset total price
     def reset_basket(self):
         self.basket_items = []
         self.total_price = 0
-        self.total_price_text = "Total Price: $0.00"
         self.item_counts = {}  # Reset item counts
-        self.ids.basket_grid.clear_widgets()  # Clear existing widgets
+        self.update_ui()
+
+    # Update UI with current basket items and total price
+    def update_ui(self):
+        if not self.basket_items:
+            self.basket_list = "So empty...\nBuy something!"
+            self.total_price_text = "Total Price: ₩0"
+        else:
+            basket_string = "\n\n"
+            for product_name, info in self.item_counts.items():
+                basket_string += f"{product_name}: ₩{int(info['price'])}\t x {info['count']}\n"
+
+            self.basket_list = basket_string
+            self.total_price_text = f"Total: ₩{self.total_price}"
+
+    def announce_basket(self):
+        if not self.basket_items:
+            # Basket is empty, announce that
+            tts_text = "장바구니가 비어있습니다."
+        else:
+            # Prepare text for TTS
+            basket_items_str = ', '.join([f"{name} {info['count']}개" for name, info in self.item_counts.items()])
+            tts_text = f"장바구니에는 {basket_items_str}가 있습니다. 총 가격은 {self.total_price}원입니다."
+        our_gTTS.announce_basket_info(tts_text)
 
 class PayScreen(Screen):
     pass
