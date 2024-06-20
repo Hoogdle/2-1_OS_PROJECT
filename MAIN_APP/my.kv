@@ -6,15 +6,16 @@
         spacing: 0
         canvas.before:
             Color:
-                rgba: 150/255, 150/255, 150/255, 1  
-            Rectangle:
+                rgba: 238/255, 245/255, 255/255, 1 #whiteblue
+            Rectangle
                 size: self.size
                 pos: self.pos
 
         BoxLayout:
             size_hint_y: None
-            height: '32dp'
+            height: '36dp'
             spacing: 230
+            padding: 0, -20
             pos_hint: {'center_x': 0.5}
 
             Button:
@@ -66,12 +67,11 @@
                 size_hint: None, None
                 size: 200, 200
                 background_normal: ''
-                background_color: (60/255, 60/255, 60/255, 0)  
+                background_color: (48/255, 84/255, 150/255, 0)   
                 on_press: root.capture_image()
-                on_press: app.root.current = 'second'
                 canvas.before:
                     Color:
-                        rgba: 0, 0, 0, 1
+                        rgba:  23/255, 107/255, 135/255, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
@@ -89,7 +89,7 @@
         spacing: 0
         canvas.before:
             Color:
-                rgba: 150/255, 150/255, 150/255, 1   
+                rgba: 238/255, 245/255, 255/255, 1  
             Rectangle:
                 size: self.size
                 pos: self.pos
@@ -113,18 +113,27 @@
                 background_color: (48/255, 84/255, 150/255, 0)                                 
                 halign: 'center'
                 valign: 'middle'
-                on_press: app.root.current = 'main'
+                font_size: 20
+                font_name: 'NanumGothicBold.ttf'  # 한글을 지원하는 폰트를 추가함.
+                on_press: root.announce_product()
                 canvas.before:
                     Color:                        
-                        rgba: 60/255, 165/255, 113/255, 1  
+                        rgba: 134/255, 182/255, 246/255, 1 
                     RoundedRectangle:
                         size: self.size
                         pos: self.pos
-                        radius: [18, 18, 18, 18]  
+                        radius: [18, 18, 18, 18]   
+
+                Image:
+                    size: 1000, 500
+                    source: 'png_files/information2.png'  
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y + 340 
 
         BoxLayout:
             size_hint_y: 0.1  
 
+        #back button
         BoxLayout:
             size_hint_y: None
             height: '100dp'  
@@ -139,7 +148,7 @@
                 on_press: app.root.current = 'main'
                 canvas.before:
                     Color:
-                        rgba: 0, 0, 0, 1
+                        rgba:  23/255, 107/255, 135/255, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
@@ -149,16 +158,18 @@
                     center_x: self.parent.center_x
                     center_y: self.parent.center_y
 
+            #basketscreen button
             Button:
                 id: basket_button
                 size_hint: None, None
                 size: 200, 200
                 background_normal: ''
-                background_color: (48/255, 84/255, 150/255, 0)  
+                background_color: (48/255, 84/255, 150/255, 0)
+                on_press: root.add_to_basket()
                 on_press: app.root.current = 'basket'
                 canvas.before:
                     Color:
-                        rgba: 0, 0, 0, 1
+                        rgba: 23/255, 107/255, 135/255, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
@@ -168,15 +179,16 @@
                     center_x: self.parent.center_x
                     center_y: self.parent.center_y 
 
+
 <BasketScreen>:
     name: 'basket'
-    BoxLayout:
+    BoxLayout:   # 바탕 정보
         orientation: 'vertical'
-        padding: 60, 20
-        spacing: 0
+        padding: 40, 60
+        spacing: 70
         canvas.before:
             Color:
-                rgba: 150/255, 150/255, 150/255, 1   
+                rgba: 238/255, 245/255, 255/255, 1 
             Rectangle:
                 size: self.size
                 pos: self.pos
@@ -184,74 +196,93 @@
         BoxLayout:
             size_hint_y: 0.1 
 
-        BoxLayout:
+        BoxLayout:   # 중앙정보
+            orientation: 'vertical'
             size_hint_y: None 
             pos_hint: {'center_x': 0.5}
-            height: '270dp'           
-            spacing: 50
+            padding: 0, -55
+            height: '320dp'           
+
             Button:
                 id: main_button
-                padding: 10, 10
-                text: ''
-                pos_hint: {'center_y': 0.5}
+                text: root.basket_list
                 size_hint_y: 1
+                font_size: 50
                 text_size: self.size 
                 background_normal: ''
                 background_color: (48/255, 84/255, 150/255, 0)                                 
-                halign: 'center'
-                valign: 'middle'
-                on_press: app.root.current = 'main'
+                halign: 'left'
+                valign: 'top'
+                font_size: 30
+                font_name: 'NanumGothicBold.ttf'  # 한글을 지원하는 폰트를 추가함.
+                on_press: root.announce_basket()
                 canvas.before:
-                    Color:                        
-                        rgba: 60/255, 165/255, 113/255, 1  
+                    Color:       # 중앙버튼                 
+                        rgba: 134/255, 182/255, 246/255, 1   
                     RoundedRectangle:
                         size: self.size
                         pos: self.pos
-                        radius: [18, 18, 18, 18]  
+                        radius: [18, 18, 18, 18]
 
+                Image:
+                    size: 300, 100
+                    source: 'png_files/button_trash2.png'  
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y + 270
+            
         BoxLayout:
-            size_hint_y: 0.1  
+            size_hint_y: 0.1
+
 
         BoxLayout:
             size_hint_y: None
+            pos_hint: {'center_x': 0.9}
             height: '100dp'  
-            pos_hint: {'center_x': 0.50}
+            pos_hint: {'center_x': 0.44}
             spacing: 50
-            padding: 10,30
+            padding: 60, 0
+
             Button:
-                id: back_button
+                id: pay_button
+                text: root.total_price_text
+                #pos_hint: {'center_x': -0.5}
                 size_hint: None, None
-                size: 560, 200
+                halign: 'right'
+                valign: 'middle'
+                font_size: 30
+                size: 560, 150
                 background_normal: ''
                 background_color: (48/255, 84/255, 150/255, 0)  
                 on_press: app.root.current = 'pay'
                 canvas.before:
                     Color:
-                        rgba: 0, 0, 0, 1
+                        rgba:  23/255, 107/255, 135/255, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
                         radius: [32, 32, 32, 32]  
                 Image:
                     source: 'png_files/button_card.png'  
-                    center_x: self.parent.center_x
+                    center_x: self.parent.center_x -180
                     center_y: self.parent.center_y
 
         BoxLayout:
             size_hint_y: None
             height: '100dp'  
-            pos_hint: {'center_x': 0.52}
+            pos_hint: {'center_x': 0.50}
+            padding: 32, -30
             spacing: 50
+
             Button:
                 id: back_button
                 size_hint: None, None
-                size: 250, 200
+                size: 250, 170
                 background_normal: ''
                 background_color: (48/255, 84/255, 150/255, 0)  
                 on_press: app.root.current = 'main'
                 canvas.before:
                     Color:
-                        rgba: 0, 0, 0, 1
+                        rgba:  23/255, 107/255, 135/255, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
@@ -261,16 +292,17 @@
                     center_x: self.parent.center_x
                     center_y: self.parent.center_y
 
+            #trashbutton
             Button:
-                id: bsket_button
+                id: basket_button
                 size_hint: None, None
-                size: 270, 200
+                size: 250, 170
                 background_normal: ''
                 background_color: (48/255, 84/255, 150/255, 0)  
-                on_press: app.root.current = 'main'
+                on_press: root.reset_basket()  # Call the reset function when pressed
                 canvas.before:
                     Color:
-                        rgba: 0, 0, 0, 1
+                        rgba: 23/255, 107/255, 135/255, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
@@ -278,7 +310,8 @@
                 Image:
                     source: 'png_files/button_trash.png'  
                     center_x: self.parent.center_x
-                    center_y: self.parent.center_y 
+                    center_y: self.parent.center_y
+
 
 <PayScreen>:
     name: 'pay'
@@ -288,7 +321,7 @@
         spacing: 0
         canvas.before:
             Color:
-                rgba: 150/255, 150/255, 150/255, 1   
+                rgba: 238/255, 245/255, 255/255, 1  
             Rectangle:
                 size: self.size
                 pos: self.pos
@@ -338,7 +371,7 @@
                 on_press: app.root.current = 'main'
                 canvas.before:
                     Color:
-                        rgba: 0, 0, 0, 1
+                        rgba: 23/255, 107/255, 135/255, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
@@ -357,7 +390,7 @@
                 on_press: root.toggle_microphone()
                 canvas.before:
                     Color:
-                        rgba: 0, 0, 0, 1
+                        rgba: 23/255, 107/255, 135/255, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
@@ -380,7 +413,7 @@
         spacing: 0
         canvas.before:
             Color:
-                rgba: 150/255, 150/255, 150/255, 1   
+                rgba: 238/255, 245/255, 255/255, 1
             Rectangle:
                 size: self.size
                 pos: self.pos
@@ -389,10 +422,14 @@
             size_hint_y: 0.1 
 
         BoxLayout:
-            size_hint_y: 1  
+            size_hint_y: 1
+            size_hint_y: None 
+            pos_hint: {'center_x': 0.5}
+            height: '520dp'           
+            spacing: 50  
             canvas.before:
                 Color:
-                    rgba: 226/255, 223/255, 208/255, 1  
+                    rgba: 134/255, 182/255, 246/255, 1   
                 RoundedRectangle:
                     size: self.size
                     pos: self.pos
@@ -401,11 +438,14 @@
             Label:
                 pos_hint: {'center_y': 0.5}
                 size_hint_y: None
-                text_size: self.size  
+                text_size: self.size 
+                font_size: '24sp'
+                font_name: 'NanumGothicBold.ttf' 
                 halign: 'center'
                 valign: 'middle'
-                text: "Setting Setting Setting Setting Setting Setting Setting Setting"
-                color: 0, 0, 0, 1
+                text: "Setting Setting Setting"
+                color: 1, 1, 1, 1
+
 
         BoxLayout:
             size_hint_y: 0.1 
@@ -424,7 +464,7 @@
                 on_press: app.root.current = 'main'
                 canvas.before:
                     Color:
-                        rgba: 0, 0, 0, 1
+                        rgba: 23/255, 107/255, 135/255, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
@@ -443,7 +483,7 @@
                 on_press: root.toggle_microphone()
                 canvas.before:
                     Color:
-                        rgba: 0, 0, 0, 1
+                        rgba: 23/255, 107/255, 135/255, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size

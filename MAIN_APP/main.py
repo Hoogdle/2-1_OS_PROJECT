@@ -1,5 +1,9 @@
-# update 
+#update
+import sys
+import time
+import sqlite3
 
+from plyer import vibrator
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.boxlayout import BoxLayout
@@ -8,84 +12,157 @@ from kivy.lang import Builder
 from kivy.uix.widget import Widget
 from kivy.uix.image import Image
 from kivy.uix.label import Label
-import sys
-import time
-from plyer import vibrator 
-import sqlite3
-from kivy.properties import StringProperty, ListProperty
+from kivy.core.text import LabelBase, DEFAULT_FONT
+from kivy.properties import StringProperty, ListProperty, NumericProperty
+from kivy.uix.gridlayout import GridLayout
 
-con=sqlite3.connect("mydatabase.db")
-cur= con.cursor()
 
-sys.path.append("./../yolo/yolov5/yolov5") # yolo 모델 사용을 위한 경로 추가
+# Register NanumGothicBold.ttf as the default font for proper Korean text display
+LabelBase.register(DEFAULT_FONT, 'NanumGothicBold.ttf')
+
+# Connect to SQLite database
+con = sqlite3.connect("mydatabase.db")
+cur = con.cursor()
+
+# Add paths for yolo model usage
+sys.path.append("./../yolo/yolov5/yolov5")
 sys.path.append("./../src")
 
-import detect # yolo의 detect 모듈 추가
-import our_gTTS   #
+# Import yolo's detect module and our_gTTS for text-to-speech conversion
+import detect
+import our_gTTS
 
-product_name = None # 제품명을 저장하기 위한 변수
+# Variable to store product name
+product_name = None
 
 class MainScreen(Screen):
+    # Method to capture image from camera
     def capture_image(self):
-        global product_name
+        global product_name  # Use global variable
         camera = self.ids['camera']
         timestr = time.strftime("%Y%m%d_%H%M%S")
         camera.export_to_png("photos/IMG.png".format(timestr))
 
-        # yolo v5 사용부분
-        opt = detect.parse_opt() # yolo의 작동을 위한 opt 받기
-        result = detect.main(opt) # predict의 main 실행 => 제품과 확률의 쌍인 list가 리턴됨
-        result = sorted(result,reverse=True,key=lambda x: x[1]) #확률을 기준으로 내림차순으로 정렬(다중 인식 처리를 위해)
-        if not(result): # 어떤 제품도 인식 되지 않은 경우 product를 None으로(나중에 데이터 베이스에 맞게 활용)
+        # Use yolo v5 for object detection
+        opt = detect.parse_opt()
+        result = detect.main(opt)  # Run detection and get result as list of (product, probability)
+        result = sorted(result, reverse=True, key=lambda x: x[1])  # Sort by probability in descending order
+        if not result:  # If no product detected
             product_name = None
-        else: # 제품이 있는 경우 리스트에서 제품 이름을 갖고와 제품명 출력
-            product_name = result[0][0] # 가장 확률이 높은 아이템을 갖고오기
+        else:  # If products detected, take the one with highest probability
+            product_name = result[0][0]
             print(product_name)
-        ##### yolo에서 제품 추론 완료
 
-        # tts 사용부분
-        our_gTTS.main(product_name)
-        # yolo로 제품명을 갖고 오는 것까지 구현완료 tts 구현, 알리가 프론트앤드 구현해줘야 함!
-    
-        # Store product_name in the app instance
+        # Use text-to-speech to announce the detected product
+        our_gTTS.main(product_name, 0)
+
+        # Store product_name in the app instance for use in other screens
         self.manager.get_screen('second').set_product_name(product_name)
-        
-        
+
+        # Change screen only if product_name is not None
+        if product_name is not None:
+            self.manager.current = 'second'
+
 class SecondScreen(Screen):
-    
-    product_data=StringProperty('')
-    basket = ListProperty([])    #장바구니 리스트
-    
-    #extract product data and send to .kv
+    # Properties to hold product data, basket items, and total price
+    product_data = StringProperty('')
+    basket = ListProperty([])
+    price = NumericProperty(0)
+
+    # Method to set product name and load its data
     def set_product_name(self, product_name):
         self.load_product_data(product_name)
 
+    # Method to load product data from the database
     def load_product_data(self, product_name):
         if product_name:
             cur.execute("SELECT * FROM products WHERE name = ?", (product_name,))
-            product_data = cur.fetchone()    #데이터베이스로 부터 정보 받음
+            product_data = cur.fetchone()  # Fetch product data from database
             if product_data:
-                self.product_data = str(product_data)    #kv로 송출
-            else:    #실패사례
+                # Extract product details and update properties
+                self.product_name = str(product_data[3])
+                self.product_brand = str(product_data[2])
+                self.product_price = str(product_data[4])
+                self.product_capacity = str(product_data[5])
+                self.product_calorie = str(product_data[6])
+                self.product_data = f"이름: {self.product_name}\n\n {self.product_brand}\n가격: {self.product_price}\n용량: {self.product_capacity}\n칼로리: {self.product_calorie}"
+            else:  # If product not found in database
                 self.product_data = "Not Found"
         else:
             self.product_data = "No product detected."
 
+    # Method to add product to basket
     def add_to_basket(self):
+        global product_name  # Use global variable to get product name
         if product_name:
-            self.basket.append(product_name)
-            self.manager.get_screen('basket').update_basket(self.basket)
-            
-    def toggle_microphone(self):
-        pass
+            cur.execute("SELECT price FROM products WHERE name = ?", (product_name,))
+            price = cur.fetchone()[0]
+            self.basket.append((product_name, price))  # Add product to basket
+            self.manager.get_screen('basket').update_basket(self.basket)  # Update basket screen
+
+    # Method to trigger TTS for the detected product
+    def announce_product(self):
+        if product_name:
+            our_gTTS.main(product_name, 1)
 
 class BasketScreen(Screen):
-    class BasketScreen(Screen):
-        basket_items = ListProperty([])
+    # Properties to hold basket items and total price
+    basket_items = ListProperty([])
+    total_price = NumericProperty(0)
+    basket_list = StringProperty("")
+    total_price_text = StringProperty("")
+    item_counts = {}  # Dictionary to hold item counts
 
-        def update_basket(self, items):
-            self.basket_items = items
-            self.ids.main_button.text = '\n'.join(self.basket_items)
+    # Method to update basket items and total price
+    def update_basket(self, items):
+        # Reset basket items and item counts
+        self.basket_items = []
+        self.item_counts = {}
+
+        # Update basket items and calculate item counts
+        for item in items:
+            product_name, price = item
+            if product_name in self.item_counts:
+                self.item_counts[product_name]['count'] += 1
+            else:
+                self.item_counts[product_name] = {'count': 1, 'price': price}
+            self.basket_items.append(item)
+
+        # Calculate total price
+        self.total_price = sum([item[1] for item in items])
+
+        # Update the UI with basket items and total price
+        self.update_ui()
+
+    # Method to clear basket and reset total price
+    def reset_basket(self):
+        self.basket_items = []
+        self.total_price = 0
+        self.item_counts = {}  # Reset item counts
+        self.update_ui()
+
+    # Update UI with current basket items and total price
+    def update_ui(self):
+        if not self.basket_items:
+            self.basket_list = "So empty...\nBuy something!"
+            self.total_price_text = "Total Price: ₩0"
+        else:
+            basket_string = "\n\n"
+            for product_name, info in self.item_counts.items():
+                basket_string += f"{product_name}: ₩{int(info['price'])}\t x {info['count']}\n"
+
+            self.basket_list = basket_string
+            self.total_price_text = f"Total: ₩{self.total_price}"
+
+    def announce_basket(self):
+        if not self.basket_items:
+            # Basket is empty, announce that
+            tts_text = "장바구니가 비어있습니다."
+        else:
+            # Prepare text for TTS
+            basket_items_str = ', '.join([f"{name} {info['count']}개" for name, info in self.item_counts.items()])
+            tts_text = f"장바구니에는 {basket_items_str}가 있습니다. 총 가격은 {self.total_price}원입니다."
+        our_gTTS.announce_basket_info(tts_text)
 
 class PayScreen(Screen):
     pass
@@ -95,6 +172,7 @@ class SettingScreen(Screen):
 
 class MyApp(App):
     def build(self):
+        # Create the screen manager and add all screens
         sm = ScreenManager()
         sm.add_widget(MainScreen(name='main'))
         sm.add_widget(SecondScreen(name='second'))
